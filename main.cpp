@@ -66,28 +66,24 @@ int main(int argc, char* argv[])
         {
             current->update_scores();
             current->update_scores();
-
-            if (current->frame_num() == 10)
-            {
-                current->update_scores();
-            }
+			current->update_scores();
 
             current = current->next_frame();
         }
     }
 
-    // PASS 2: Recalculate frame totals now that
-    // future frame scores exist
-    for (int p = 0; p < num_players; p++)
-    {
-        Bowling_Frame* current = players[p];
+    // Recalculate frame totals after all future frames
+	// have their scores populated
+	for (int p = 0; p < num_players; p++)
+	{
+    	Bowling_Frame* current = players[p];
 
-        while (current)
-        {
-            current->update_scores();
-            current = current->next_frame();
-        }
-    }
+   		while (current)
+    	{
+        	current->update_scores();
+        	current = current->next_frame();
+    	}
+	}
 
     // Print results
     for (int p = 0; p < num_players; p++)
