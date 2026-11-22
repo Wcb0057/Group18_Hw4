@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
 	{
 		cout << "ERROR: Please provide the number of players." << endl;
 		cout << "example: ./bowling 3" << endl;
-		return 1;
+		return 0;
 	}
 
 	int num_players = atoi(argv[1]);
