@@ -1,6 +1,7 @@
 #include <iostream>
 #include "bowling_frame.h"
 #include <random>
+#include <cstdlib>
 
 using namespace std;
 
@@ -20,59 +21,118 @@ int current_game_total(Bowling_Frame * first_frame)
 	return game_total;	
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	//make frames
-	Bowling_Frame * f1 = new Bowling_Frame(1);
-	Bowling_Frame * f2 = new Bowling_Frame(2);
-	Bowling_Frame * f3 = new Bowling_Frame(3);
-
-	//link frames together
-	f1->next_frame(f2);
-
-	f2->next_frame(f3);
-	f2->prev_frame(f1);
-
-	f3->prev_frame(f2);	
-
-	//set frame scores	
-	f1->update_scores();
-	f1->update_scores();
-	cout << "Frame 1 Total: " << current_game_total(f1) << endl;
-
-	f1->update_scores();
-	f1->update_scores();
-	cout << "Frame 1 and 2 Total: " << current_game_total(f1) << endl;
-
-
-	f1->update_scores();
-	f1->update_scores();
-	cout << "Frame 1,2,and 3 Total: " << current_game_total(f1) << endl;
-
-	//print values
-	cout << "Frame " << f1->frame_num() << ": " << endl
-		 << " Score 1: " << f1->score1() << endl
-		 << " Score 2: " << f1->score2() << endl;
-
-	cout << "Frame " << f2->frame_num() << ": " << endl
-	     << " Score 1: " << f2->score1() << endl
-		 << " Score 2: " << f2->score2() << endl;
-
-	cout << "Frame " << f3->frame_num() << ": " << endl
-	     << " Score 1: " << f3->score1() << endl
-		 << " Score 2: " << f3->score2() << endl;
-
-	//iterate through linked list and print values
-	Bowling_Frame * traverse = f1;
-	
-	while(traverse)
+	//Require exactly one command line
+	if (argc != 2)
 	{
-		cout << "Frame " << traverse->frame_num() << ": " << endl
-		 	 << " Score 1: " << traverse->score1() << endl
-		 	 << " Score 2: " << traverse->score2() << endl;
-
-		traverse = traverse->next_frame();
+		cout << "ERROR: Please provide the number of players." << endl;
+		cout << "example: ./bowling 3" << endl;
+		return 1;
 	}
 
+	int num_players = atoi(argv[1]);
+
+	//creates an array of player pointers
+	Bowling_Frame** players = new Bowling_Frame*[num_players];
+
+	//create 10 frames for each player
+	for (int p = 0; p < num_players; p++)
+	{
+		players[p] = new Bowling_Frame(1);
+
+		Bowling_Frame* current = players[p];
+
+		for (int frame = 2; frame <= 10; frame++)
+		{
+			Bowling_Frame* newFrame = 
+				new Bowling_Frame(frame);
+
+			current ->next_frame(newFrame);
+			newFrame->prev_frame(current);
+
+			current = newFrame;
+		}
+	}
+
+
+
+	  // PASS 1: Generate all rolls
+    for (int p = 0; p < num_players; p++)
+    {
+        Bowling_Frame* current = players[p];
+
+        while (current)
+        {
+            current->update_scores();
+            current->update_scores();
+
+            if (current->frame_num() == 10)
+            {
+                current->update_scores();
+            }
+
+            current = current->next_frame();
+        }
+    }
+
+    // PASS 2: Recalculate frame totals now that
+    // future frame scores exist
+    for (int p = 0; p < num_players; p++)
+    {
+        Bowling_Frame* current = players[p];
+
+        while (current)
+        {
+            current->update_scores();
+            current = current->next_frame();
+        }
+    }
+
+    // Print results
+    for (int p = 0; p < num_players; p++)
+    {
+        cout << "\n========================" << endl;
+        cout << "Player " << (p + 1) << endl;
+        cout << "========================" << endl;
+
+        Bowling_Frame* current = players[p];
+
+        while (current)
+        {
+            cout << "Frame "
+                 << current->frame_num()
+                 << endl;
+
+            cout << " Score 1: "
+                 << current->score1()
+                 << endl;
+
+            cout << " Score 2: "
+                 << current->score2()
+                 << endl;
+
+            if (current->frame_num() == 10)
+            {
+                cout << " Score 3: "
+                     << current->score3()
+                     << endl;
+            }
+
+            cout << " Frame Total: "
+                 << current->frame_score()
+                 << endl
+                 << endl;
+
+            current = current->next_frame();
+        }
+
+        cout << "Game Total: "
+             << current_game_total(players[p])
+             << endl;
+	
+    }
+
+    return 0;
 }
 
