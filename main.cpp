@@ -1,77 +1,113 @@
 #include <iostream>
+#include <sstream>
 #include "bowling_frame.h"
-#include <random>
 
 using namespace std;
 
-std::random_device dev_main;
-std::mt19937 rng_main(dev_main());
-
-int current_game_total(Bowling_Frame * first_frame)
+int current_game_total(Bowling_Frame* first_frame)
 {
-	Bowling_Frame * temp = first_frame;
-	int game_total = 0;
-	int temp_total = 0;
-	while(temp)
-	{
-		game_total += temp->frame_score();
-		temp = temp->next_frame();
-	}
-	return game_total;	
+    Bowling_Frame* temp = first_frame;
+    int game_total = 0;
+
+    while (temp != nullptr)
+    {
+        game_total += temp->frame_score();
+        temp = temp->next_frame();
+    }
+
+    return game_total;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-	//make frames
-	Bowling_Frame * f1 = new Bowling_Frame(1);
-	Bowling_Frame * f2 = new Bowling_Frame(2);
-	Bowling_Frame * f3 = new Bowling_Frame(3);
+    if (argc != 2)
+    {
+        cout << "Error: Please enter the number of players.\n";
+        cout << "Usage: ./bowling <number of players>\n";
+        return 1;
+    }
 
-	//link frames together
-	f1->next_frame(f2);
+    int player_count = 0;
+    char extra;
+    istringstream input(argv[1]);
 
-	f2->next_frame(f3);
-	f2->prev_frame(f1);
+    if (!(input >> player_count) || (input >> extra) || player_count <= 0)
+    {
+        cout << "Error: Enter a positive whole number of players.\n";
+        return 1;
+    }
 
-	f3->prev_frame(f2);	
+    Bowling_Frame** first_frames = new Bowling_Frame*[player_count];
 
-	//set frame scores	
-	f1->update_scores();
-	f1->update_scores();
-	cout << "Frame 1 Total: " << current_game_total(f1) << endl;
+    // Make and link ten frames for each player.
+    for (int player = 0; player < player_count; player++)
+    {
+        first_frames[player] = new Bowling_Frame(1);
+        Bowling_Frame* previous = first_frames[player];
 
-	f1->update_scores();
-	f1->update_scores();
-	cout << "Frame 1 and 2 Total: " << current_game_total(f1) << endl;
+        for (int number = 2; number <= 10; number++)
+        {
+            Bowling_Frame* frame = new Bowling_Frame(number);
+            previous->next_frame(frame);
+            frame->prev_frame(previous);
+            previous = frame;
+        }
+    }
 
+    for (int player = 0; player < player_count; player++)
+    {
+        Bowling_Frame* frame = first_frames[player];
 
-	f1->update_scores();
-	f1->update_scores();
-	cout << "Frame 1,2,and 3 Total: " << current_game_total(f1) << endl;
+        // Play each frame in order.
+        while (frame != nullptr)
+        {
+            frame->update_scores();
 
-	//print values
-	cout << "Frame " << f1->frame_num() << ": " << endl
-		 << " Score 1: " << f1->score1() << endl
-		 << " Score 2: " << f1->score2() << endl;
+            if (frame->frame_num() == 10)
+            {
+                frame->update_scores();
 
-	cout << "Frame " << f2->frame_num() << ": " << endl
-	     << " Score 1: " << f2->score1() << endl
-		 << " Score 2: " << f2->score2() << endl;
+                if (frame->strike() || frame->spare())
+                {
+                    frame->update_scores();
+                }
+            }
+            else if (!frame->strike())
+            {
+                frame->update_scores();
+            }
 
-	cout << "Frame " << f3->frame_num() << ": " << endl
-	     << " Score 1: " << f3->score1() << endl
-		 << " Score 2: " << f3->score2() << endl;
+            frame = frame->next_frame();
+        }
 
-	//iterate through linked list and print values
-	Bowling_Frame * traverse = f1;
-	
-	while(traverse)
-	{
-		cout << "Frame " << traverse->frame_num() << ": " << endl
-		 	 << " Score 1: " << traverse->score1() << endl
-		 	 << " Score 2: " << traverse->score2() << endl;
+        // All rolls are available now, so update and print the scores.
+        cout << "\nPlayer " << player + 1 << "\n";
+        frame = first_frames[player];
 
-		traverse = traverse->next_frame();
-	}
+        while (frame != nullptr)
+        {
+            frame->update_scores();
 
+            cout << "Frame " << frame->frame_num() << ": "
+                 << frame->frame_score() << "\n";
+
+            frame = frame->next_frame();
+        }
+
+        cout << "Game total: "
+             << current_game_total(first_frames[player]) << "\n";
+
+        // Free the frames created for this player.
+        frame = first_frames[player];
+
+        while (frame != nullptr)
+        {
+            Bowling_Frame* next = frame->next_frame();
+            delete frame;
+            frame = next;
+        }
+    }
+
+    delete[] first_frames;
+    return 0;
 }
